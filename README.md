@@ -19,7 +19,7 @@ CmdTrace 查询帮助
       [--from <时间>] [--to <时间>] [--limit <数量>]
 --server <服务器名>  指定服务器；玩家执行时默认是当前服务器
 --player <玩家名>    只看这个玩家的命令
---uuid <UUID>       按 UUID 精确查询
+--uuid <UUID>        按 UUID 精确查询
 --startswith <前缀>  查命令前缀；不写 '/' 时会自动补上
 --contains <关键词>  查包含指定内容的命令；不会自动补 '/'
 --regex <正则>       用正则查询；不会自动补 '/'
