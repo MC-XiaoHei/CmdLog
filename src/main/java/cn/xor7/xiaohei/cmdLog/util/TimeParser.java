@@ -4,13 +4,28 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class TimeParser {
 
-    private static final DateTimeFormatter DATE_FORMATTER =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter DATE_TIME_FORMATTER =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final List<DateTimeFormatter> DATE_FORMATTERS = List.of(
+        DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+        DateTimeFormatter.ofPattern("yyyyMMdd")
+    );
+    private static final List<DateTimeFormatter> DATE_TIME_FORMATTERS = List.of(
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+        DateTimeFormatter.ofPattern("yyyyMMdd HH:mm:ss"),
+        DateTimeFormatter.ofPattern("yyyyMMdd HH:mm"),
+        DateTimeFormatter.ofPattern("yyyyMMddHHmmss"),
+        DateTimeFormatter.ofPattern("yyyyMMddHHmm")
+    );
+    private static final Pattern RELATIVE_TIME_PATTERN = Pattern.compile(
+        "^([+-]?\\d+)([smhdw])$",
+        Pattern.CASE_INSENSITIVE
+    );
     private static final DateTimeFormatter DISPLAY_TIME_FORMATTER =
         DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter DISPLAY_DAY_FORMATTER =
@@ -35,14 +50,53 @@ public final class TimeParser {
     }
 
     private static LocalDateTime parse(String input, boolean startOfDay) {
-        try {
-            return LocalDateTime.parse(input, DATE_TIME_FORMATTER);
-        } catch (DateTimeParseException ignored) {}
+        String normalizedInput = input.trim();
 
-        LocalDate date = LocalDate.parse(input, DATE_FORMATTER);
-        if (startOfDay) {
-            return date.atStartOfDay();
+        LocalDateTime relativeTime = parseRelativeTime(normalizedInput);
+        if (relativeTime != null) {
+            return relativeTime;
         }
-        return date.atTime(23, 59, 59);
+
+        for (DateTimeFormatter formatter : DATE_TIME_FORMATTERS) {
+            try {
+                return LocalDateTime.parse(normalizedInput, formatter);
+            } catch (DateTimeParseException ignored) {}
+        }
+
+        for (DateTimeFormatter formatter : DATE_FORMATTERS) {
+            try {
+                LocalDate date = LocalDate.parse(normalizedInput, formatter);
+                if (startOfDay) {
+                    return date.atStartOfDay();
+                }
+                return date.atTime(23, 59, 59);
+            } catch (DateTimeParseException ignored) {}
+        }
+
+        throw new DateTimeParseException(
+            "Unsupported time format",
+            normalizedInput,
+            0
+        );
+    }
+
+    private static LocalDateTime parseRelativeTime(String input) {
+        Matcher matcher = RELATIVE_TIME_PATTERN.matcher(input);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        long amount = Long.parseLong(matcher.group(1));
+        char unit = Character.toLowerCase(matcher.group(2).charAt(0));
+        LocalDateTime now = LocalDateTime.now();
+
+        return switch (unit) {
+            case 's' -> now.plusSeconds(amount);
+            case 'm' -> now.plusMinutes(amount);
+            case 'h' -> now.plusHours(amount);
+            case 'd' -> now.plusDays(amount);
+            case 'w' -> now.plusWeeks(amount);
+            default -> null;
+        };
     }
 }
