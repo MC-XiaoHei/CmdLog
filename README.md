@@ -65,6 +65,7 @@ query.default-recent-limit=10
 query.enable-regex=true
 
 # 额外记录的聊天前缀，多个用英文逗号分隔
+# 留空表示不启用额外前缀
 # 例如 !!,##
-query.custom-cmd-prefixes=!!
+query.custom-cmd-prefixes=
 ```

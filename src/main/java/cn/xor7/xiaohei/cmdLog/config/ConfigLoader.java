@@ -155,15 +155,6 @@ public final class ConfigLoader {
             .filter(prefix -> !prefix.isEmpty())
             .distinct()
             .collect(Collectors.toList());
-        if (prefixes.isEmpty()) {
-            throw new IllegalArgumentException(
-                "Invalid config value: " +
-                    key +
-                    "='" +
-                    value +
-                    "' must contain at least one non-empty prefix"
-            );
-        }
         return List.copyOf(prefixes);
     }
 
